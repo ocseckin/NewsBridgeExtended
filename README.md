@@ -16,7 +16,7 @@
   <li>Credibility Detection: Automatically highlights posts with low credibility.</li>
   <li>Informed Responses: Generate responses based on the latest news and data to foster meaningful conversations.</li>
   <li>Reliable Sources: Continuously updated news database every two hours to ensure accuracy.</li>
-  <li>Political Perspectives: Automatically detects political keywords and generates side-by-side Democrat and Republican perspectives to show different viewpoints.</li>
+  <li>Political Perspectives: Automatically detects political keywords in posts and generates side-by-side Democrat and Republican perspectives to show different viewpoints.</li>
 </ul>
 <h4>Important Usage Notes:</h4>
 <ol>
