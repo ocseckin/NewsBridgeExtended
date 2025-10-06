@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "NewsBridge",
   "version": "0.4.6",
-  "description": "Transform you Facebook experience with Facebook NewsBridge!",
+  "description": "Transform your Facebook and X (Twitter) experience with NewsBridge!",
   "host_permissions": ["https://osome.iu.edu*"],
   "author": "Observatory of Social Media",
   "options_ui": {
@@ -21,6 +21,10 @@
   "content_scripts": [
     {
       "matches": ["https://www.facebook.com/*"],
+      "js": ["js/content.js"]
+    },
+    {
+      "matches": ["https://twitter.com/*", "https://x.com/*"],
       "js": ["js/content.js"]
     }
   ],

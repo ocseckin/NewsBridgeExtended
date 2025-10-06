@@ -6,6 +6,7 @@ const isChrome = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.use
 let uid, apiKey, newsbridgedataSharing;
 let currentPlatform;
 let currentSocialMediaPlatform;
+let socialMediaQuerySelection; // Store reference to all platform configs
 let POLITICAL_KEYWORDS = []; // Will be loaded from keywords.json
 
 // Load keywords from JSON file
@@ -28,9 +29,16 @@ Promise.all([
     loadKeywords()
 ])
     .then(([module]) => {
-        const { PLATFORM, platformConfig, socialMediaQuerySelection, SOCIALMEDIA } = module;
+        const { PLATFORM, platformConfig, socialMediaQuerySelection: smqs, detectSocialMediaPlatform } = module;
         currentPlatform = platformConfig[PLATFORM];
-        currentSocialMediaPlatform = socialMediaQuerySelection[SOCIALMEDIA];
+        socialMediaQuerySelection = smqs; // Store reference
+        
+        // Auto-detect social media platform
+        const detectedPlatform = detectSocialMediaPlatform();
+        currentSocialMediaPlatform = smqs[detectedPlatform];
+        
+        console.log('NewsBridge initialized for:', detectedPlatform);
+        console.log('Platform config:', currentSocialMediaPlatform);
         startProcess();
     })
     .catch(err => {
@@ -57,7 +65,7 @@ function startProcess() {
 // Show NewsBridge icon in UI
 function showNewsBridgeIcon() {
     const intervalId = setInterval(() => {
-        const referenceButtonContainer = document.querySelector('[aria-label="New message"]');
+        const referenceButtonContainer = document.querySelector(currentSocialMediaPlatform.iconReference);
         if (!referenceButtonContainer) return;
 
         clearInterval(intervalId);
@@ -74,6 +82,7 @@ function showNewsBridgeIcon() {
             display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
         `;
 
         const newsBridgeImg = document.createElement('img');
@@ -130,15 +139,25 @@ function beginProcess() {
 // Check post content for URLs
 async function checkPostContent(postElement) {
     showSpinner(postElement);
-    const parentSibling = postElement.parentElement.parentElement.nextElementSibling;
-    if (!parentSibling) {
+    
+    // Different DOM structure for Twitter vs Facebook
+    let contentContainer;
+    if (currentSocialMediaPlatform === socialMediaQuerySelection.twitter) {
+        // For Twitter, content is inside the article element
+        contentContainer = postElement;
+    } else {
+        // For Facebook, content is in the next sibling of parent's parent
+        contentContainer = postElement.parentElement.parentElement.nextElementSibling;
+    }
+    
+    if (!contentContainer) {
         postElement.classList.add('processed');
         return;
     }
 
     // Get all plain text elements and embedded URL elements
-    const plainTextElements = parentSibling.querySelectorAll(currentSocialMediaPlatform.plainTextElements);
-    const embeddedUrlElement = parentSibling.querySelector(currentSocialMediaPlatform.embeddedUrlElement);
+    const plainTextElements = contentContainer.querySelectorAll(currentSocialMediaPlatform.plainTextElements);
+    const embeddedUrlElement = contentContainer.querySelector(currentSocialMediaPlatform.embeddedUrlElement);
 
     let content = "";
     let allATags = [];
@@ -237,6 +256,8 @@ async function checkPostContent(postElement) {
     // If no valid URL was found, check for political keywords
     if (!foundValidUrl && content) {
         const hasPoliticalKeywords = checkForPoliticalKeywords(content);
+        console.log('Checking for keywords in:', content.substring(0, 100));
+        console.log('Has political keywords:', hasPoliticalKeywords);
         if (hasPoliticalKeywords) {
             await showReviewBtn(postElement, content, postElement.getAttribute('post-id'), false);
             foundValidUrl = true;
@@ -273,7 +294,17 @@ async function extractContent(htmlElement) {
 
 // Show loading spinner
 function showSpinner(postElement) {
-    const elements = postElement.parentElement.parentElement.querySelectorAll(currentSocialMediaPlatform.reviewBtnElement);
+    let elements;
+    
+    // Different element lookup for Twitter vs Facebook
+    if (currentSocialMediaPlatform === socialMediaQuerySelection.twitter) {
+        // For Twitter, find action bar inside the article
+        elements = postElement.querySelectorAll(currentSocialMediaPlatform.reviewBtnElement);
+    } else {
+        // For Facebook, find in parent's parent
+        elements = postElement.parentElement.parentElement.querySelectorAll(currentSocialMediaPlatform.reviewBtnElement);
+    }
+    
     if (elements.length === 0) return;
 
     if (!document.getElementById('spinnerStyle')) {
@@ -304,8 +335,27 @@ function showSpinner(postElement) {
 
 // Show review button
 async function showReviewBtn(postElement, content, postId, hasUrl = true) {
-    const container = postElement.parentElement.querySelector(currentSocialMediaPlatform.reviewBtnElement);
-    if (!container || container.querySelector('.responseButton')) return;
+    let container;
+    
+    // Different container lookup for Twitter vs Facebook
+    if (currentSocialMediaPlatform === socialMediaQuerySelection.twitter) {
+        // For Twitter, find the action bar (role=group) inside the article
+        container = postElement.querySelector(currentSocialMediaPlatform.reviewBtnElement);
+        console.log('Twitter - Looking for container:', currentSocialMediaPlatform.reviewBtnElement);
+        console.log('Twitter - Found container:', container);
+    } else {
+        // For Facebook, find container in parent element
+        container = postElement.parentElement.querySelector(currentSocialMediaPlatform.reviewBtnElement);
+    }
+    
+    if (!container) {
+        console.log('Container not found, cannot add button');
+        return;
+    }
+    if (container.querySelector('.responseButton')) {
+        console.log('Button already exists');
+        return;
+    }
 
     container.querySelector('.spinner')?.remove();
 
@@ -315,6 +365,7 @@ async function showReviewBtn(postElement, content, postId, hasUrl = true) {
         background-color: #DDF4EA; color: black; border: 2px solid #009933;
         font-weight: bold; border-radius: 10px; font-size: 12px; padding: 5px;
         cursor: pointer; position: relative; float: right; margin: -31px 0 0 5px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
     const img = document.createElement('img');
@@ -431,6 +482,7 @@ function createModal() {
         background-color: #fefefe; padding: 20px; border: 1px solid #888;
         width: 80%; max-width: 1000px; text-align: center; display: flex; border-radius: 4px;
         flex-direction: column; position: relative; max-height: 90vh; overflow-y: auto;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
     const closeButton = document.createElement('span');
@@ -457,6 +509,7 @@ function showAPIKeyError(container) {
                          settings page</a>.`;
     errorMsg.style.cssText = `
         margin-top: 10px; text-align: left; color: black; font-size: 12px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
     // First, append the error message to the DOM (inside showError)
@@ -493,13 +546,17 @@ function showError(container, title, message) {
     header.style.cssText = `
         text-align: left; color: black; font-weight: bold;
         font-size: 16px; margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
     errorCard.appendChild(header);
 
     // Create message container
     const messageContainer = document.createElement('div');
-    messageContainer.style.cssText = 'margin-top: 5px; text-align: left; color: black; font-size: 12px;';
+    messageContainer.style.cssText = `
+        margin-top: 5px; text-align: left; color: black; font-size: 12px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    `;
 
     if (typeof message === 'string') {
         // Convert URLs to clickable links
@@ -553,12 +610,14 @@ function createContextCard(contextData) {
     title.style.cssText = `
         text-align: left; color: black; font-weight: bold;
         font-size: 16px; margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
     const content = document.createElement('p');
     content.innerHTML = contextData.contentHTML;
     content.style.cssText = `
         margin-top: 5px; text-align: left; color: black; font-size: 12px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
     const sources = createSourcesHeader(contextData.webLinks);
@@ -567,6 +626,7 @@ function createContextCard(contextData) {
     note.style.cssText = `
         text-align: left; color: black; font-weight: bold;
         font-size: 12px; margin-bottom: 10px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
     card.appendChild(title);
@@ -583,6 +643,7 @@ function createSourcesHeader(webLinks) {
     header.style.cssText = `
         margin-top: 2px; text-align: left; color: black;
         font-size: 12px; display: flex;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
     const label = document.createElement('span');
@@ -620,7 +681,10 @@ function createSourcesHeader(webLinks) {
 
         const message = document.createElement('span');
         message.textContent = 'The LLM did not provide any sources for this context.';
-        message.style.cssText = 'color: black; font-size: 12px;';
+        message.style.cssText = `
+            color: black; font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        `;
         message.prepend(cautionImg);
         header.appendChild(message);
     }
@@ -642,6 +706,7 @@ function createDualPerspectiveCard(democratPerspective, republicanPerspective) {
     title.style.cssText = `
         text-align: center; color: black; font-weight: bold;
         font-size: 20px; margin: 0 0 18px 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
     container.appendChild(title);
 
@@ -665,6 +730,7 @@ function createDualPerspectiveCard(democratPerspective, republicanPerspective) {
     note.style.cssText = `
         text-align: center; color: #666; font-size: 12px; 
         margin-top: 15px; font-style: italic;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
     container.appendChild(note);
 
@@ -704,6 +770,7 @@ function createSinglePerspectiveCard(perspectiveTitle, content, accentColor) {
     header.style.cssText = `
         color: ${accentColor}; font-weight: bold; font-size: 20px;
         margin: 0; text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
     // Add logo and title in correct order
@@ -722,6 +789,7 @@ function createSinglePerspectiveCard(perspectiveTitle, content, accentColor) {
     text.style.cssText = `
         color: black; font-size: 18px; line-height: 1.6;
         margin: 0; text-align: left;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
     card.appendChild(text);
 
@@ -736,6 +804,7 @@ function createGenerateCommentButton(content, contextHTML, container, postId) {
         border-radius: 10px; font-size: 0.8rem; padding: 0.5em 1.5em;
         cursor: pointer; width: 100%; max-width: 300px; display: flex;
         align-items: center; justify-content: center; text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
     const img = document.createElement('img');
@@ -801,11 +870,15 @@ function createCommentCard(container, comment) {
     title.textContent = 'Comment';
     title.style.cssText = `
         text-align: left; color: black; font-weight: bold; font-size: 16px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
     const content = document.createElement('p');
     content.textContent = comment;
-    content.style.cssText = 'text-align: left; color: black; font-size: 12px;';
+    content.style.cssText = `
+        text-align: left; color: black; font-size: 12px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    `;
 
     const copyButton = createCopyButton(comment);
 
@@ -825,6 +898,7 @@ function createCopyButton(text) {
         border-radius: 10px; font-size: 0.8rem; padding: 0.5em 1.5em;
         cursor: pointer; width: 100%; max-width: 300px; display: flex;
         align-items: center; justify-content: center; text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
     const img = document.createElement('img');

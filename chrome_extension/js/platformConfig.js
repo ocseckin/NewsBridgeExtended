@@ -1,6 +1,20 @@
 // Select from openai and google
 export const PLATFORM = 'openai';
-export const SOCIALMEDIA = 'facebook';
+
+// Detect current social media platform from URL
+export function detectSocialMediaPlatform() {
+    const hostname = window.location.hostname.toLowerCase();
+    
+    if (hostname.includes('facebook.com') || hostname.includes('fb.com')) {
+        return 'facebook';
+    } else if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
+        return 'twitter';
+    }
+    
+    // Default to facebook if unknown
+    console.warn('Unknown social media platform, defaulting to facebook');
+    return 'facebook';
+}
 
 export const platformConfig = {
     google: {
@@ -28,7 +42,17 @@ export const socialMediaQuerySelection = {
         reviewBtnElement: '.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1iyjqo2.xeuugli',
         plainTextElements: '.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl',
         embeddedUrlElement: '.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6',
-        seeMoreElement: '.x1i10hfl.xjbqb8w.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x1ypdohk.xt0psk2.xe8uvvx.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x16tdsg8.x1hl2dhg.xggy1nq.x1a2a7pz.xkrqix3.x1sur9pj.xzsf02u.x1s688f'
+        seeMoreElement: '.x1i10hfl.xjbqb8w.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x1ypdohk.xt0psk2.xe8uvvx.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x16tdsg8.x1hl2dhg.xggy1nq.x1a2a7pz.xkrqix3.x1sur9pj.xzsf02u.x1s688f',
+        iconReference: '[aria-label="New message"]'
+    },
+    twitter: {
+        // Get timeline tweet/post elements from the feed
+        timelinePostElements: 'article[data-testid="tweet"]:not(.processed)',
+        reviewBtnElement: 'div[role="group"]',
+        plainTextElements: 'div[data-testid="tweetText"]',
+        embeddedUrlElement: 'div[data-testid="card.wrapper"]',
+        seeMoreElement: 'div[data-testid="tweet-text-show-more-link"]',
+        iconReference: '[data-testid="SideNav_NewTweet_Button"]'
     }
 }
 
