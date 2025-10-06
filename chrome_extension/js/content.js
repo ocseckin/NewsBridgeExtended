@@ -741,8 +741,8 @@ function createDualPerspectiveCard(democratPerspective, republicanPerspective, o
     const bridgeButton = createBridgeButton(originalContent, democratPerspective, republicanPerspective, postId, modalContainer);
     bridgeButton.style.cssText = `
         position: absolute; bottom: 15px; right: 15px;
-        background-color: #DDF4EA; border: 2px solid #009933; color: black;
-        border-radius: 10px; font-size: 0.8rem; padding: 0.5em 1.2em;
+        background-color: #DDF4EA; border: 2px solid #009933; color: #2e7d32;
+        border-radius: 10px; font-size: 20px; padding: 0.2em .5em;
         cursor: pointer; font-weight: bold;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
@@ -813,7 +813,15 @@ function createSinglePerspectiveCard(perspectiveTitle, content, accentColor) {
 // Create bridge button for generating bridging comment
 function createBridgeButton(originalContent, democratPerspective, republicanPerspective, postId, modalContainer) {
     const button = document.createElement('button');
-    button.textContent = '🌉 Bridge';
+    
+    // Add NewsBridge logo
+    const img = document.createElement('img');
+    img.src = chrome.runtime.getURL("images/news_bridge.png");
+    img.alt = 'NewsBridge Logo';
+    img.style.cssText = 'width: 14px; height: 14px; margin-right: 6px; vertical-align: middle;';
+    
+    button.appendChild(img);
+    button.appendChild(document.createTextNode('Bridge'));
     
     button.addEventListener('click', async () => {
         // Disable button during generation
@@ -874,23 +882,23 @@ function createBridgingCommentCard(container, comment) {
     const card = document.createElement('div');
     card.id = 'bridgingCommentCard';
     card.style.cssText = `
-        background-color: #f0f8ff; border: 2px solid #4A90E2; border-radius: 4px;
+        background-color: #e8f5e9; border: 2px solid #53d700ff; border-radius: 4px;
         padding: 15px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         max-width: 100%; margin-top: 12px;
     `;
 
     const title = document.createElement('h3');
-    title.textContent = '🌉 Bridging Comment';
+    title.textContent = 'Bridging Comment';
     title.style.cssText = `
-        text-align: left; color: #4A90E2; font-weight: bold; font-size: 16px;
-        margin: 0 0 10px 0;
+        text-align: left; color: #2e7d32; font-weight: bold; font-size: 20px;
+        margin: 0 0 6px 0;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
     const content = document.createElement('p');
     content.textContent = comment;
     content.style.cssText = `
-        text-align: left; color: black; font-size: 14px; line-height: 1.6; margin: 0 0 10px 0;
+        text-align: left; color: black; font-size: 18px; line-height: 1.6; margin: 0 0 10px 0;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
@@ -1043,11 +1051,11 @@ const generateCommentPrompt = "Generate a very short, friendly, casual response 
 
 const generateDemocratPerspectivePrompt = "You are analyzing a social media post from a Democrat perspective. " +
     "Provide a respectful, thoughtful analysis of how someone with Democrat/liberal political views might interpret this content." +
-    "Keep your answer very short and concise, using simple English."
+    "Keep your answer very short -under 300 characters- and concise, using simple English."
 
 const generateRepublicanPerspectivePrompt = "You are analyzing a social media post from a Republican/conservative perspective. " +
     "Provide a respectful, thoughtful analysis of how someone with Republican/conservative political views might interpret this content. " +
-    "Keep your answer very short and concise, using simple English."
+    "Keep your answer very short -under 300 characters- and concise, using simple English."
 
 const generateBridgingPrompt = "You are a mediator helping people from different political perspectives find common ground. " +
     "Given a social media post and both Democrat and Republican perspectives on it, generate a very brief, constructive comment " +
