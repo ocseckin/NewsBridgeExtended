@@ -14,8 +14,9 @@
 <h4>Key Features:</h4>
 <ul>
   <li>Credibility Detection: Automatically highlights posts with low credibility.</li>
-  <li>Informed Responses: Generate responses based on the latest news and data to foster meaningful conversations.
+  <li>Informed Responses: Generate responses based on the latest news and data to foster meaningful conversations.</li>
   <li>Reliable Sources: Continuously updated news database every two hours to ensure accuracy.</li>
+  <li>Political Perspectives: Automatically detects political keywords and generates side-by-side Democrat and Republican perspectives to show different viewpoints.</li>
 </ul>
 <h4>Important Usage Notes:</h4>
 <ol>
@@ -43,6 +44,14 @@
 
 <h3>What Facebook HTML elements used to extract the posts</h3>
 <p>Please refer <a href="https://docs.google.com/document/d/1Z5RAhHT91-bP2gjqXzTd0DkFQsABng1RH5gSoZ9TuQA/edit?usp=sharing" target="_blank" rel="noopener noreferrer">here</a> to update the platformConfig.js if there is change happened to Facebook HTML elements. </p>
+
+<h3>Political Perspectives Feature</h3>
+<p>When a post contains political keywords (defined in <code>chrome_extension/config/keywords.json</code>) and has no external URLs, the extension generates two AI perspectives:</p>
+<ul>
+  <li><strong>Democrat Perspective:</strong> Analysis from a liberal viewpoint</li>
+  <li><strong>Republican Perspective:</strong> Analysis from a conservative viewpoint</li>
+</ul>
+<p>Both perspectives are displayed side-by-side to help users understand different political viewpoints.<p>
 
 
 
