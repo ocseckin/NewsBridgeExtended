@@ -424,7 +424,10 @@ async function showResponseModal(content, postId, hasUrl = true) {
             // Create dual perspective card
             const perspectiveCard = createDualPerspectiveCard(
                 democratResponse.dataReceived,
-                republicanResponse.dataReceived
+                republicanResponse.dataReceived,
+                content,
+                postId,
+                modalContainer
             );
             modalContainer.appendChild(perspectiveCard);
             
@@ -693,12 +696,12 @@ function createSourcesHeader(webLinks) {
 }
 
 // Create dual perspective card for political content
-function createDualPerspectiveCard(democratPerspective, republicanPerspective) {
+function createDualPerspectiveCard(democratPerspective, republicanPerspective, originalContent, postId, modalContainer) {
     const container = document.createElement('div');
     container.style.cssText = `
         background-color: white; border: 1px solid #ddd; border-radius: 4px;
         padding: 15px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        max-width: 100%; margin-top: 12px;
+        max-width: 100%; margin-top: 12px; position: relative;
     `;
 
     const title = document.createElement('h3');
@@ -733,6 +736,17 @@ function createDualPerspectiveCard(democratPerspective, republicanPerspective) {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
     container.appendChild(note);
+
+    // Add Bridge button in bottom right
+    const bridgeButton = createBridgeButton(originalContent, democratPerspective, republicanPerspective, postId, modalContainer);
+    bridgeButton.style.cssText = `
+        position: absolute; bottom: 15px; right: 15px;
+        background-color: #DDF4EA; border: 2px solid #009933; color: black;
+        border-radius: 10px; font-size: 0.8rem; padding: 0.5em 1.2em;
+        cursor: pointer; font-weight: bold;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    `;
+    container.appendChild(bridgeButton);
 
     return container;
 }
@@ -792,6 +806,100 @@ function createSinglePerspectiveCard(perspectiveTitle, content, accentColor) {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
     card.appendChild(text);
+
+    return card;
+}
+
+// Create bridge button for generating bridging comment
+function createBridgeButton(originalContent, democratPerspective, republicanPerspective, postId, modalContainer) {
+    const button = document.createElement('button');
+    button.textContent = '🌉 Bridge';
+    
+    button.addEventListener('click', async () => {
+        // Disable button during generation
+        button.disabled = true;
+        button.style.opacity = '0.5';
+        button.style.cursor = 'not-allowed';
+        
+        const loading = createLoadingMessage(modalContainer, 'Generating bridging comment');
+        
+        // Remove existing bridging comment if present
+        const existingBridge = modalContainer.querySelector('#bridgingCommentCard');
+        if (existingBridge) {
+            existingBridge.remove();
+        }
+        
+        try {
+            const response = await callGenerativeAPI({
+                content: originalContent,
+                democratPerspective: democratPerspective,
+                republicanPerspective: republicanPerspective,
+                generateComment: false,
+                postId: postId,
+                perspective: 'bridging'
+            });
+            
+            loading.remove();
+            
+            if (!response.isSuccess) {
+                showError(modalContainer, "NewsBridge Error!", response.errorMsg);
+                button.disabled = false;
+                button.style.opacity = '1';
+                button.style.cursor = 'pointer';
+                return;
+            }
+            
+            // Create and display bridging comment card
+            createBridgingCommentCard(modalContainer, response.dataReceived);
+            
+            // Re-enable button
+            button.disabled = false;
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+            
+        } catch (error) {
+            loading.remove();
+            showError(modalContainer, "NewsBridge Error!", error.message);
+            button.disabled = false;
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+        }
+    });
+    
+    return button;
+}
+
+// Create bridging comment card
+function createBridgingCommentCard(container, comment) {
+    const card = document.createElement('div');
+    card.id = 'bridgingCommentCard';
+    card.style.cssText = `
+        background-color: #f0f8ff; border: 2px solid #4A90E2; border-radius: 4px;
+        padding: 15px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        max-width: 100%; margin-top: 12px;
+    `;
+
+    const title = document.createElement('h3');
+    title.textContent = '🌉 Bridging Comment';
+    title.style.cssText = `
+        text-align: left; color: #4A90E2; font-weight: bold; font-size: 16px;
+        margin: 0 0 10px 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    `;
+
+    const content = document.createElement('p');
+    content.textContent = comment;
+    content.style.cssText = `
+        text-align: left; color: black; font-size: 14px; line-height: 1.6; margin: 0 0 10px 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    `;
+
+    const copyButton = createCopyButton(comment);
+
+    card.appendChild(title);
+    card.appendChild(content);
+    card.appendChild(copyButton);
+    container.appendChild(card);
 
     return card;
 }
@@ -935,15 +1043,21 @@ const generateCommentPrompt = "Generate a very short, friendly, casual response 
 
 const generateDemocratPerspectivePrompt = "You are analyzing a social media post from a Democrat perspective. " +
     "Provide a respectful, thoughtful analysis of how someone with Democrat/liberal political views might interpret this content." +
-    "Keep your answer very short -less than 300 characters- and concise."
+    "Keep your answer very short and concise, using simple English."
 
 const generateRepublicanPerspectivePrompt = "You are analyzing a social media post from a Republican/conservative perspective. " +
     "Provide a respectful, thoughtful analysis of how someone with Republican/conservative political views might interpret this content. " +
-    "Keep your answer very short -less than 300 characters- and concise."
+    "Keep your answer very short and concise, using simple English."
+
+const generateBridgingPrompt = "You are a mediator helping people from different political perspectives find common ground. " +
+    "Given a social media post and both Democrat and Republican perspectives on it, generate a very brief, constructive comment " +
+    "that acknowledges both viewpoints and suggests a bridge-building approach for discussion. " +
+    "Focus on shared values, common ground, or respectful ways to engage. Keep it under 3 sentences. " +
+    "Write in a friendly, conversational tone suitable for social media. Do not use emojis."
 
 // Call generative AI API
 async function callGenerativeAPI(options) {
-    const { content, context, generateComment, postId, perspective } = options;
+    const { content, context, generateComment, postId, perspective, democratPerspective, republicanPerspective } = options;
 
     if (!apiKey) {
         return {
@@ -957,14 +1071,23 @@ async function callGenerativeAPI(options) {
         
         // Determine which prompt to use
         let systemPrompt;
+        let userMessage;
+        
         if (perspective === 'democrat') {
             systemPrompt = generateDemocratPerspectivePrompt;
+            userMessage = content;
         } else if (perspective === 'republican') {
             systemPrompt = generateRepublicanPerspectivePrompt;
+            userMessage = content;
+        } else if (perspective === 'bridging') {
+            systemPrompt = generateBridgingPrompt;
+            userMessage = `POST: ${content}\n\nDEMOCRAT PERSPECTIVE: ${democratPerspective}\n\nREPUBLICAN PERSPECTIVE: ${republicanPerspective}`;
         } else if (generateComment) {
             systemPrompt = generateCommentPrompt;
+            userMessage = `POST: ${content}\nCONTEXT: ${context}`;
         } else {
             systemPrompt = generateContextPrompt;
+            userMessage = content;
         }
 
         if (currentPlatform.name === 'Google') {
@@ -972,9 +1095,7 @@ async function callGenerativeAPI(options) {
             requestBody = {
                 contents: [{
                     parts: [{
-                        text: generateComment
-                            ? `POST: ${content}\nCONTEXT: ${context}`
-                            : content
+                        text: userMessage
                     }]
                 }],
                 systemInstruction: {
@@ -1003,7 +1124,7 @@ async function callGenerativeAPI(options) {
                     content: systemPrompt
                 }, {
                     role: "user",
-                    content: generateComment ? `POST: ${content}\nCONTEXT: ${context}` : content
+                    content: userMessage
                 }]
             };
             headers = {
