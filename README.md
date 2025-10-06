@@ -13,11 +13,11 @@
 
 <h4>Key Features:</h4>
 <ul>
- <li>Multi-Platform Support: Works on Facebook and X (Twitter) - configurable in settings.</li>
   <li>Credibility Detection: Automatically highlights posts with low credibility.</li>
   <li>Informed Responses: Generate responses based on the latest news and data to foster meaningful conversations.</li>
   <li>Reliable Sources: Continuously updated news database every two hours to ensure accuracy.</li>
   <li>Political Perspectives: Automatically detects political posts by keyword search and generates side-by-side Democrat and Republican perspectives to show different viewpoints when clicked on "Review" button.</li>
+  <li>Multi-Platform Support: Works on Facebook and X (Twitter).</li>
 </ul>
 <h4>Important Usage Notes:</h4>
 <ol>
@@ -52,10 +52,3 @@
   <li><strong>Democrat Perspective:</strong> Analysis from a liberal viewpoint</li>
   <li><strong>Republican Perspective:</strong> Analysis from a conservative viewpoint</li>
 </ul>
-
-
-
-
-
-
-

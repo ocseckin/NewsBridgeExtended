@@ -935,11 +935,11 @@ const generateCommentPrompt = "Generate a very short, friendly, casual response 
 
 const generateDemocratPerspectivePrompt = "You are analyzing a social media post from a Democrat perspective. " +
     "Provide a respectful, thoughtful analysis of how someone with Democrat/liberal political views might interpret this content." +
-    "Keep your answer very short and concise."
+    "Keep your answer very short -less than 300 characters- and concise."
 
 const generateRepublicanPerspectivePrompt = "You are analyzing a social media post from a Republican/conservative perspective. " +
     "Provide a respectful, thoughtful analysis of how someone with Republican/conservative political views might interpret this content. " +
-    "Keep your answer very short and concise."
+    "Keep your answer very short -less than 300 characters- and concise."
 
 // Call generative AI API
 async function callGenerativeAPI(options) {
