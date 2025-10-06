@@ -1051,17 +1051,16 @@ const generateCommentPrompt = "Generate a very short, friendly, casual response 
 
 const generateDemocratPerspectivePrompt = "You are analyzing a social media post from a Democrat perspective. " +
     "Provide a respectful, thoughtful analysis of how someone with Democrat/liberal political views might interpret this content." +
-    "Keep your answer very short -under 300 characters- and concise, using simple English."
+    "Keep your answer very short -under 300 characters- and concise, using simple English. Make sure to keep your sentences short and simple."
 
 const generateRepublicanPerspectivePrompt = "You are analyzing a social media post from a Republican/conservative perspective. " +
     "Provide a respectful, thoughtful analysis of how someone with Republican/conservative political views might interpret this content. " +
-    "Keep your answer very short -under 300 characters- and concise, using simple English."
+    "Keep your answer very short -under 300 characters- and concise, using simple English. Make sure to keep your sentences short and simple."
 
 const generateBridgingPrompt = "You are a mediator helping people from different political perspectives find common ground. " +
-    "Given a social media post and both Democrat and Republican perspectives on it, generate a very brief, constructive comment " +
-    "that acknowledges both viewpoints and suggests a bridge-building approach for discussion. " +
-    "Focus on shared values, common ground, or respectful ways to engage. Keep it under 3 sentences. " +
-    "Write in a friendly, conversational tone suitable for social media. Do not use emojis."
+    "Given a social media post, a Democrat perspective, and a Republican perspective, " +
+    "generate a very brief comment that bridges the perspectives of both Democrats and Republicans. " +
+    "Keep your answer very short -under 300 characters- and concise, using simple English. Make sure to keep your sentences short and simple."
 
 // Call generative AI API
 async function callGenerativeAPI(options) {
